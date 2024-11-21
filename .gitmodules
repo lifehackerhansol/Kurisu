@@ -1,0 +1,4 @@
+[submodule "error-codes"]
+	path = error-codes
+	url = https://github.com/PretendoNetwork/error-codes
+	branch = dev
