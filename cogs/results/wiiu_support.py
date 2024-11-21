@@ -1,7 +1,10 @@
 import re
 
+from typing import Dict
+
 from .types import Module, ResultInfo, ConsoleErrorInfo, ConsoleErrorField, \
     BANNED_FIELD, WARNING_COLOR, UNKNOWN_CATEGORY_DESCRIPTION
+from .pretendo_support import construct_support as construct_support_pretendo
 
 """
 This file contains all currently known Wii U result and error codes.
@@ -496,14 +499,25 @@ def is_valid(error):
 
 def construct_support(ret, mod, desc):
     category = modules.get(mod, Module(''))
+    description: Dict = None
+    summary: str = ""
+
+    if category:
+        summary = category.get_summary(desc)
+        description = category.get_error(desc)
+
+    # Fallback to Pretendo's error descriptions if we do not have our own
+    if not category or not description:
+        return construct_support_pretendo(ret, mod, desc)
+
     if category.name:
         ret.add_field(ConsoleErrorField('Category', message_str=category.name))
     else:
         ret.add_field(ConsoleErrorField('Category', supplementary_value=mod))
-    summary = category.get_summary(desc)
+
     if summary:
         ret.add_field(ConsoleErrorField('Summary', message_str=summary))
-    description = category.get_error(desc)
+
     if description is not None and description.description:
         ret.add_field(ConsoleErrorField('Description', message_str=description.description))
         if description.support_url:

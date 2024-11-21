@@ -1,8 +1,11 @@
 import re
 
+from typing import Dict
+
 from .ctr_results import modules as ctr_results_modules
 from .types import Module, ResultInfo, ConsoleErrorInfo, ConsoleErrorField, \
     BANNED_FIELD, WARNING_COLOR, UNKNOWN_CATEGORY_DESCRIPTION
+from .pretendo_support import construct_support as construct_support_pretendo
 
 
 """
@@ -281,11 +284,20 @@ def construct_result_range(ret, mod, range_desc):
 
 def construct_support(ret, mod, desc):
     category = modules.get(mod, Module(''))
+    description: Dict = None
+
+    if category:
+        description = category.get_error(desc)
+
+    # Fallback to Pretendo's error descriptions if we do not have our own
+    if not category or not description:
+        return construct_support_pretendo(ret, mod, desc)
+
     if category.name:
         ret.add_field(ConsoleErrorField('Category', message_str=category.name))
     else:
         ret.add_field(ConsoleErrorField('Category', supplementary_value=mod))
-    description = category.get_error(desc)
+
     if description is not None and description.description:
         ret.add_field(ConsoleErrorField('Description', message_str=description.description))
         if description.support_url:
